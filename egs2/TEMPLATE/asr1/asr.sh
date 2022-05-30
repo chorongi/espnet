@@ -145,6 +145,14 @@ asr_speech_fold_length=800 # fold_length for speech data during ASR training.
 asr_text_fold_length=150   # fold_length for text data during ASR training.
 lm_fold_length=150         # fold_length for LM training.
 
+# Multimodal Related 
+audio_input=true   # true to use audio input
+vision_input=false # true to use vision input
+mouth_roi=false # true to use mouth_roi cropped video as vision input
+sample_step=1   # Number of steps you require to sample audio/vision features (1 = sample every frame)
+stack_order=1   # Number of neighboring frames for audio features to concatenate 
+                # ESPNet may automatically concat audio features for audio-vision alignment
+
 help_message=$(cat << EOF
 Usage: $0 --train-set "<train_set_name>" --valid-set "<valid_set_name>" --test_sets "<test_set_names>"
 
@@ -246,6 +254,13 @@ Options:
     --asr_speech_fold_length # fold_length for speech data during ASR training (default="${asr_speech_fold_length}").
     --asr_text_fold_length   # fold_length for text data during ASR training (default="${asr_text_fold_length}").
     --lm_fold_length         # fold_length for LM training (default="${lm_fold_length}").
+
+    # Multimodal Related
+    --audio_input   # true to use audio input
+    --vision_input  # true to use vision input
+    --mouth_roi     # true to use mouth_roi cropped video as vision input
+    --sample_step   # Number of steps you require to sample audio/vision features (1 = sample every frame)
+    --stack_order   # Number of neighboring frames for audio features to concatenate 
 EOF
 )
 
@@ -443,6 +458,9 @@ if ! "${skip_data_prep}"; then
         log "Stage 1: Data preparation for data/${train_set}, data/${valid_set}, etc."
         # [Task dependent] Need to create data.sh for new corpus
         local/data.sh ${local_data_opts}
+        if "${vision_input}"; then
+            local/vision_data.sh --mouth_roi ${mouth_roi}
+        fi
     fi
 
     if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
